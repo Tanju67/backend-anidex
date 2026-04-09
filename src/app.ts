@@ -7,6 +7,7 @@ import errorHandlerMiddleware from "./middleware/error-handler.js";
 import notFound from "./middleware/not-found.js";
 import connectDB from "./utils/connectDB.js";
 import authRouter from "./routes/auth.route.js";
+import animeRouter from "./routes/anime.route.js";
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use(
 );
 
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/anime", animeRouter);
 
 app.use(notFound);
 app.use(errorHandlerMiddleware);
