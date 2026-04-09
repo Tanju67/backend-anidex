@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import User from "../models/User.js";
 import { StatusCodes } from "http-status-codes";
 import BadRequest from "../errors/badRequest.js";
+import UnauthenticatedError from "../errors/unauthenticated.js";
 
 export const register = async (req: Request, res: Response) => {
   const { fullName, email, password } = req.body;
@@ -23,5 +24,32 @@ export const register = async (req: Request, res: Response) => {
   });
 };
 
-export const login = (req: Request, res: Response) => {};
+export const login = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    throw new BadRequest("Please provide email and password");
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new UnauthenticatedError("Invalid Credentials");
+  }
+
+  const isPasswordCorrect = await user.comparePassword(password);
+
+  if (!isPasswordCorrect) {
+    throw new UnauthenticatedError("Invalid Credentials");
+  }
+
+  const userObject = user.toObject();
+  const { password: pass, ...info } = userObject;
+
+  const token = user.createJWT();
+  res
+    .status(StatusCodes.OK)
+    .json({ data: info, token, message: "User logged in successfully" });
+};
+
 export const getCurrentUser = (req: Request, res: Response) => {};
