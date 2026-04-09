@@ -52,4 +52,13 @@ export const login = async (req: Request, res: Response) => {
     .json({ data: info, token, message: "User logged in successfully" });
 };
 
-export const getCurrentUser = (req: Request, res: Response) => {};
+export const getCurrentUser = async (req: Request, res: Response) => {
+  const user = await User.findById(req.userData!.userId).select("-password");
+
+  if (!user) {
+    throw new UnauthenticatedError("User not found");
+  }
+  const userObject = user.toObject();
+
+  res.status(StatusCodes.OK).json({ data: userObject });
+};
