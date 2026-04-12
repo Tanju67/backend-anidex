@@ -10,8 +10,10 @@ export const createAnime = async (req: Request, res: Response) => {
 
   const { title, image, animeId } = req.body;
 
-  if (!title || !image || !animeId) {
-    throw new BadRequest("Please provide all values");
+  const isAlreadyAdded = await Anime.findOne({ animeId, createdBy: userId });
+
+  if (isAlreadyAdded) {
+    throw new BadRequest("This anime is already in your watchlist");
   }
 
   const anime = await Anime.create({
@@ -33,12 +35,13 @@ export const getAnime = async (req: Request, res: Response) => {
   const limit = Number(req.query.limit) || 12;
   const skip = (page - 1) * limit;
 
-  const userAnime = await Anime.find({ createdBy: userId })
-    .sort("-createdAt")
-    .skip(skip)
-    .limit(limit);
-
-  const totalAnimes = await Anime.countDocuments({ createdBy: userId });
+  const [userAnime, totalAnimes] = await Promise.all([
+    Anime.find({ createdBy: userId })
+      .sort("-createdAt")
+      .skip(skip)
+      .limit(limit),
+    Anime.countDocuments({ createdBy: userId }),
+  ]);
 
   const numOfPages = Math.ceil(totalAnimes / limit);
 

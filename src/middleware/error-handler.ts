@@ -1,5 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import type { Request, Response, NextFunction } from "express";
+import { ZodError } from "zod";
 // Parent error class
 
 interface CustomError extends Error {
@@ -21,6 +22,19 @@ const errorHandlerMiddleware = (
     statusCode: err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
     message: err.message || "Something went wrong try again later",
   };
+
+  // --- ZOD ERROR CHECK ---
+  if (err instanceof ZodError) {
+    customError.message = err.issues
+      .map((item) => {
+        const path = item.path.join(".");
+        return `${path}: ${item.message}`;
+      })
+      .join(", ");
+
+    customError.statusCode = StatusCodes.BAD_REQUEST;
+  }
+  // -----------------------
 
   if (err.name === "ValidationError" && err.errors) {
     customError.message = Object.values(err.errors)

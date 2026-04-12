@@ -10,10 +10,6 @@ import { OAuth2Client } from "google-auth-library";
 export const register = async (req: Request, res: Response) => {
   const { fullName, email, password } = req.body;
 
-  if (!fullName || !email || !password) {
-    throw new BadRequest("Please provide all values");
-  }
-
   const existingUser = await User.findOne({ email });
 
   if (existingUser) {
@@ -40,10 +36,6 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    throw new BadRequest("Please provide email and password");
-  }
 
   const user = await User.findOne({ email });
 
@@ -88,10 +80,6 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // /api/v1/auth/google
 export const googleLogin = async (req: Request, res: Response) => {
   const { idToken: googleToken } = req.body;
-
-  if (!googleToken) {
-    throw new BadRequest("Google token is required");
-  }
 
   const ticket = await client.verifyIdToken({
     idToken: googleToken!,

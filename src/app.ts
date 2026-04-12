@@ -3,33 +3,48 @@ import "express-async-errors";
 
 import cors from "cors";
 import express from "express";
+import swaggerUi from "swagger-ui-express";
+import swaggerJsdoc from "swagger-jsdoc";
 import errorHandlerMiddleware from "./middleware/error-handler.js";
 import notFound from "./middleware/not-found.js";
 import connectDB from "./utils/connectDB.js";
 import authRouter from "./routes/auth.route.js";
 import animeRouter from "./routes/anime.route.js";
+import { swaggerOptions } from "./utils/swagger.js";
 
 const app = express();
-
-const port = process.env.PORT || 5000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+
+const allowedOrigins = ["http://localhost:5173", process.env.CLIENT_URL].filter(
+  Boolean,
+) as string[];
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/anime", animeRouter);
 
 app.use(notFound);
 app.use(errorHandlerMiddleware);
 
+const port = process.env.PORT || 5000;
 const start = async () => {
   try {
     if (!process.env.MONGO_URI) {

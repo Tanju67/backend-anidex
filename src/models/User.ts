@@ -1,7 +1,6 @@
-import mongoose, { Document, Model } from "mongoose";
-import validator from "validator";
 import bcrypt from "bcryptjs";
-import jwt, { type SignOptions } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
+import mongoose, { Document, Model } from "mongoose";
 
 export interface IUser extends Document {
   fullName: string;
@@ -25,7 +24,10 @@ const userSchema = new mongoose.Schema<IUser>(
       type: String,
       required: [true, "Please enter your email"],
       unique: [true, "Email already exists"],
-      validate: [validator.isEmail, "Please enter a valid email"],
+      match: [
+        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+        "Please enter a valid email",
+      ],
     },
     password: {
       type: String,
