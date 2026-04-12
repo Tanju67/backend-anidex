@@ -6,7 +6,9 @@ import jwt, { type SignOptions } from "jsonwebtoken";
 export interface IUser extends Document {
   fullName: string;
   email: string;
-  password: string;
+  password?: string;
+  authMethod: "local" | "google";
+  googleId?: string;
   comparePassword: (canditatePassword: string) => Promise<boolean>;
   createJWT: () => string;
 }
@@ -27,15 +29,29 @@ const userSchema = new mongoose.Schema<IUser>(
     },
     password: {
       type: String,
-      required: [true, "Please enter your password"],
+      required: function () {
+        return this.authMethod === "local";
+      },
       minlength: [6, "Password must be at least 6 characters"],
+    },
+
+    authMethod: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+    googleId: {
+      type: String,
+
+      sparse: true,
+      unique: true,
     },
   },
   { timestamps: true },
 );
 
 userSchema.pre("save", async function () {
-  if (!this.isModified("password")) {
+  if (!this.isModified("password") || !this.password) {
     return;
   }
   const salt = await bcrypt.genSalt(10);

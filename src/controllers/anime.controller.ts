@@ -53,12 +53,28 @@ export const getAnime = async (req: Request, res: Response) => {
   });
 };
 
+export const getSingleAnime = async (req: Request, res: Response) => {
+  const { userId } = req.userData!;
+  const { id: animeId } = req.params as { id: string };
+
+  const anime = await Anime.findOne({
+    animeId: animeId,
+    createdBy: new Types.ObjectId(userId),
+  });
+
+  if (!anime) {
+    return res.status(StatusCodes.OK).json({ data: null });
+  }
+
+  res.status(StatusCodes.OK).json({ data: anime });
+};
+
 export const deleteAnime = async (req: Request, res: Response) => {
   const { userId } = req.userData!;
   const { id: animeId } = req.params as { id: string };
 
   const anime = await Anime.findOneAndDelete({
-    _id: new Types.ObjectId(animeId),
+    animeId: animeId,
     createdBy: new Types.ObjectId(userId),
   });
 
