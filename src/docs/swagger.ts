@@ -12,7 +12,7 @@ export const swaggerOptions: Options = {
     },
     servers: [
       {
-        url: `http://localhost:5000`,
+        url: `https://backend-anidex.onrender.com`,
         description: "Development Server",
       },
     ],

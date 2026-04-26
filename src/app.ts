@@ -21,7 +21,8 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "http://localhost:5000",
+  "https://anidex-ozzf.onrender.com",
+  "https://backend-anidex.onrender.com",
   process.env.CLIENT_URL,
 ].filter(Boolean) as string[];
 
