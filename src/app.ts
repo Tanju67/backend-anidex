@@ -10,7 +10,7 @@ import notFound from "./middleware/not-found.js";
 import connectDB from "./utils/connectDB.js";
 import authRouter from "./routes/auth.route.js";
 import animeRouter from "./routes/anime.route.js";
-import { swaggerOptions } from "./utils/swagger.js";
+import { swaggerOptions } from "./docs/swagger.js";
 
 const app = express();
 
@@ -19,9 +19,11 @@ app.use(express.urlencoded({ extended: true }));
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
-const allowedOrigins = ["http://localhost:5173", process.env.CLIENT_URL].filter(
-  Boolean,
-) as string[];
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5000",
+  process.env.CLIENT_URL,
+].filter(Boolean) as string[];
 
 app.use(
   cors({

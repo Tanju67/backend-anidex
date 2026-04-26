@@ -1,9 +1,9 @@
 import type { Request, Response } from "express";
-import BadRequest from "../errors/badRequest.js";
-import Anime from "../models/Anime.js";
 import { StatusCodes } from "http-status-codes";
+import { Types } from "mongoose";
+import BadRequest from "../errors/badRequest.js";
 import NotFoundError from "../errors/notFound.js";
-import mongoose, { Types } from "mongoose";
+import Anime from "../models/Anime.js";
 
 export const createAnime = async (req: Request, res: Response) => {
   const { userId } = req.userData!;
@@ -25,7 +25,7 @@ export const createAnime = async (req: Request, res: Response) => {
 
   res
     .status(StatusCodes.CREATED)
-    .json({ data: anime, message: "Anime created successfully" });
+    .json({ data: anime, message: "Anime successfully added" });
 };
 
 export const getAnime = async (req: Request, res: Response) => {
@@ -85,7 +85,5 @@ export const deleteAnime = async (req: Request, res: Response) => {
     throw new NotFoundError(`No anime found with id: ${animeId} in your list`);
   }
 
-  res
-    .status(StatusCodes.OK)
-    .json({ message: "Anime removed from your list successfully" });
+  res.status(StatusCodes.OK).json({ message: "Anime removed from watchlist" });
 };
