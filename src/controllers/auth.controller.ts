@@ -6,6 +6,7 @@ import { StatusCodes } from "http-status-codes";
 import BadRequest from "../errors/badRequest.js";
 import UnauthenticatedError from "../errors/unauthenticated.js";
 import { OAuth2Client } from "google-auth-library";
+import axios from "axios";
 
 export const register = async (req: Request, res: Response) => {
   const { fullName, email, password } = req.body;
@@ -78,47 +79,56 @@ export const getCurrentUser = async (req: Request, res: Response) => {
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // /api/v1/auth/google
+
 export const googleLogin = async (req: Request, res: Response) => {
   const { idToken: googleToken } = req.body;
 
-  const ticket = await client.verifyIdToken({
-    idToken: googleToken!,
-    audience: process.env.GOOGLE_CLIENT_ID!,
-  });
+  let email: string;
+  let name: string;
+  let googleId: string;
 
-  const payload = ticket.getPayload();
+  try {
+    if (googleToken && googleToken.startsWith("ya29.")) {
+      const response = await axios.get(
+        `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${googleToken}`,
+      );
 
-  if (!payload) {
-    throw new BadRequest("Invalid Google token");
-  }
+      const userData = response.data;
+      email = userData.email;
+      name = userData.name || "Google User";
+      googleId = userData.sub;
+    } else {
+      const ticket = await client.verifyIdToken({
+        idToken: googleToken,
+        audience: process.env.GOOGLE_CLIENT_ID!,
+      });
 
-  if (!payload.email) {
-    throw new BadRequest("Google account must have an email associated.");
-  }
+      const payload = ticket.getPayload();
+      if (!payload || !payload.email) {
+        throw new Error("Invalid Google idToken");
+      }
+      email = payload.email;
+      name = payload.name || "Google User";
+      googleId = payload.sub;
+    }
 
-  const email: string = payload.email;
-  const name = payload.name || "Google User";
-  const googleId = payload.sub;
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        fullName: name,
+        email: email,
+        googleId: googleId,
+        authMethod: "google",
+      });
+    }
 
-  let user = await User.findOne({ email });
-
-  if (!user) {
-    user = await User.create({
-      fullName: name,
-      email: email,
-      googleId: googleId,
-      authMethod: "google",
+    const token = user.createJWT();
+    res.status(StatusCodes.OK).json({
+      user: { fullName: user.fullName, email: user.email },
+      token,
     });
-  } else if (user.authMethod !== "google") {
-    throw new BadRequest(
-      "This email is already registered with a password. Please login normally.",
-    );
+  } catch (error) {
+    console.error("Google Auth Error Detail:", error);
+    res.status(401).json({ message: "Authentication failed" });
   }
-
-  const token = user.createJWT();
-
-  res.status(StatusCodes.OK).json({
-    user: { fullName: user.fullName, email: user.email },
-    token,
-  });
 };
